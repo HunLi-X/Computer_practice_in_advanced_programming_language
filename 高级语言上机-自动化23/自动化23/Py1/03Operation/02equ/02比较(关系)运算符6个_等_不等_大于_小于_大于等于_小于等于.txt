@@ -1,0 +1,9 @@
+02比较(关系)运算符6个_等_不等_大于_小于_大于等于_小于等于
+0201equ
+0202no_equ
+0203greater
+0204Less
+0205greater_equ
+0206Less_equ
+
+
