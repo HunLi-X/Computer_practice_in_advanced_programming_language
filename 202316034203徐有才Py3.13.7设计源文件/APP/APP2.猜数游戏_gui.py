@@ -10,7 +10,7 @@ class GuessNumberApp:
     def __init__(self, root):
         self.root = root
         self.root.title("猜数游戏 - GUI")
-        self.root.geometry("500x450")
+        self.root.geometry("500x600")
         self.root.configure(bg="#f0f0f0")
 
         # 生成随机数

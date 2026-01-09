@@ -1,0 +1,149 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
+  <diagram name="第 1 页" id="m63j-YHoqZEXneaXbQai">
+    <mxGraphModel dx="969" dy="609" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-1" value="开始" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="340" y="20" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-2" value="提示用户输入十进制整数" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="110" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-3" value="接收用户输入数据" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="200" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-4" value="输入是否为整数？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="320" y="300" width="160" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-5" value="进入数制转换流程" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="310" y="450" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-6" value="转换为二进制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="80" y="560" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-7" value="转换为八进制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="330" y="560" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-8" value="转换为十六进制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="580" y="560" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-9" value="暂存转换结果" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="660" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-10" value="输出原始十进制数" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="750" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-11" value="输出二进制结果" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="255" y="750" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-12" value="输出八进制结果" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="430" y="750" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-13" value="输出十六进制结果" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="605" y="750" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-14" value="结束" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="340" y="850" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-15" value="显示错误提示" style="shape=parallelogram;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="580" y="320" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-16" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-1" target="8orGXnV7RSwFAfhJcQKI-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-17" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-2" target="8orGXnV7RSwFAfhJcQKI-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-18" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-3" target="8orGXnV7RSwFAfhJcQKI-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-19" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-4" target="8orGXnV7RSwFAfhJcQKI-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-20" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-5" target="8orGXnV7RSwFAfhJcQKI-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="530" />
+              <mxPoint x="150" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-21" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-5" target="8orGXnV7RSwFAfhJcQKI-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-22" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-5" target="8orGXnV7RSwFAfhJcQKI-8">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="530" />
+              <mxPoint x="650" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-23" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-6" target="8orGXnV7RSwFAfhJcQKI-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="640" />
+              <mxPoint x="400" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-24" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-7" target="8orGXnV7RSwFAfhJcQKI-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-25" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-8" target="8orGXnV7RSwFAfhJcQKI-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="640" />
+              <mxPoint x="400" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-26" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-9" target="8orGXnV7RSwFAfhJcQKI-10">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="730" />
+              <mxPoint x="150" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-27" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-9" target="8orGXnV7RSwFAfhJcQKI-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="730" />
+              <mxPoint x="325" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-28" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-9" target="8orGXnV7RSwFAfhJcQKI-12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="730" />
+              <mxPoint x="500" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8orGXnV7RSwFAfhJcQKI-29" edge="1" parent="1" source="8orGXnV7RSwFAfhJcQKI-9" target="8orGXnV7RSwFAfhJcQKI-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="730" />
+              <mxPoint x="675" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

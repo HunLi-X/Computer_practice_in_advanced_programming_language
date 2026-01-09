@@ -17,16 +17,16 @@ class MainApp:
     def __init__(self, root):
         self.root = root
         self.root.title("2023级自动化 - 高级语言上机实习项目")
-        self.root.geometry("950x750")
+        self.root.geometry("1200x750")
         self.root.configure(bg="#f0f0f0")
 
-        # 创建主框架（上下分栏）
+        # 创建主框架（左右分栏）
         main_container = ttk.Frame(root)
         main_container.pack(fill=tk.BOTH, expand=True)
 
-        # 上部主框架
+        # 左侧主框架
         main_frame = ttk.Frame(main_container, padding="30")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        main_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # 创建标题
         title_label = ttk.Label(
@@ -101,6 +101,15 @@ class MainApp:
             },
         ]
 
+        # 配置样式
+        style = ttk.Style()
+        style.configure(
+            "App.TButton",
+            font=("Helvetica", 12, "bold"),
+            padding=(15, 10),
+            width=25
+        )
+
         # 创建按钮
         self.create_buttons()
 
@@ -113,26 +122,13 @@ class MainApp:
         )
         self.footer_label.pack(pady=20)
 
-        # 配置样式
-        style = ttk.Style()
-        style.configure(
-            "App.TButton",
-            font=("Helvetica", 12, "bold"),
-            padding=(15, 10),
-            width=25
-        )
-
         # 创建日志控制台区域
         log_frame = ttk.LabelFrame(main_container, text="运行日志", padding="10")
-        log_frame.pack(fill=tk.X, padx=30, pady=(0, 20))
+        log_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(0, 30), pady=30, ipadx=10)
 
         # 日志文本框
-        log_text_frame = ttk.Frame(log_frame)
-        log_text_frame.pack(fill=tk.BOTH, expand=True)
-
         self.log_text = tk.Text(
-            log_text_frame,
-            height=8,
+            log_frame,
             wrap=tk.WORD,
             font=("Consolas", 9),
             bg="#1e1e1e",
@@ -142,13 +138,13 @@ class MainApp:
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # 日志滚动条
-        log_scrollbar = ttk.Scrollbar(log_text_frame, orient=tk.VERTICAL, command=self.log_text.yview)
+        log_scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=log_scrollbar.set)
         log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # 清空日志按钮
         clear_log_btn = ttk.Button(log_frame, text="清空日志", command=self.clear_log)
-        clear_log_btn.pack(side=tk.RIGHT, padx=(10, 0))
+        clear_log_btn.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
 
         # 配置日志颜色标签
         self.log_text.tag_config("info", foreground="#4ec9b0")
