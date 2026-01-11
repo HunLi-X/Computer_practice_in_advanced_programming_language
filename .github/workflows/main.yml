@@ -1,0 +1,26 @@
+name: Sync from cnb
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 每6小时同步一次
+  workflow_dispatch:       # 支持手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Add cnb remote
+        run: |
+          git remote add cnb https://cnb.cool/chief985/For_course/Computer_practice_in_advanced_programming_language.git
+      
+      - name: Pull from cnb
+        run: |
+          git fetch cnb main
+          git merge cnb/main || git merge cnb/master
+      
+      - name: Push to GitHub
+        run: |
+          git push origin main
