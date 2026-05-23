@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/Program Files/Python313/python.exe\" -c \"import ast; ast.parse\\(open\\('Py3.13.7设计源文件/APP/APP3.七段数码管绘制_gui.py', encoding='utf-8'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash('C:/Program Files/Python313/python.exe' -c 'import ast; ast.parse\\(open\\('\\\\''__TRACKED_VAR__'\\\\'', encoding='\\\\''utf-8'\\\\''\\).read\\(\\)\\); print\\('\\\\''OK'\\\\''\\)')",
+      "Bash(\"C:/Program Files/Python313/python.exe\" -c \"import ast; ast.parse\\(open\\('Py3.13.7设计源文件/APP/APP3.七段数码管绘制_gui.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
+    ]
+  }
+}
