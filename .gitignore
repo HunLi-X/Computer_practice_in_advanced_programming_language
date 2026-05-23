@@ -1,0 +1,53 @@
+# ==========================================
+# Git 忽略文件 - 信息脱敏配置
+# ==========================================
+
+# 敏感信息目录 - 包含个人隐私文件
+敏感信息/
+
+# 个人身份相关文件
+*.docx
+*.pdf
+*.doc
+~$*
+
+# Webhook 配置文件（含密钥）- 使用模板
+webhook_server.py
+webhook_setup.sh
+webhook_server/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 压缩包
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 操作系统文件
+Thumbs.db
+desktop.ini
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 日志文件
+*.log
