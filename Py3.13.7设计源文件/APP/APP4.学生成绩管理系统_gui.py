@@ -1,5 +1,6 @@
 # ==========================================
-# App4. 学生成绩管理系统 - GUI版本 (CustomTkinter 美化)
+# App4. 学生成绩管理系统 - GUI版本（CustomTkinter 美化）
+# 功能: 字典操作、数据持久化
 # ==========================================
 
 import sys
@@ -8,7 +9,7 @@ import tkinter.ttk as ttk
 import pandas as pd
 from tkinter import filedialog, messagebox
 
-# ── 依赖检查 ──
+# ---- 依赖检查 ----
 try:
     import customtkinter as ctk
 except ImportError:
@@ -18,6 +19,42 @@ except ImportError:
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+# ---- 设计系统（颜色）----
+COLORS = {
+    "bg":           "#0A0E1A",
+    "card":         "#131B2E",
+    "card_border":  "#1E2D4D",
+    "primary":      "#6366F1",
+    "primary_hover":"#4F46E5",
+    "secondary":    "#1E293B",
+    "success":      "#10B981",
+    "danger":       "#EF4444",
+    "danger_hover": "#DC2626",
+    "warning":      "#F59E0B",
+    "text":         "#E2E8F0",
+    "text_muted":   "#64748B",
+    "input_bg":     "#0F172A",
+    "tree_bg":      "#0F172A",
+    "tree_fg":      "#E2E8F0",
+    "tree_heading":  "#1E293B",
+}
+
+# 字体参数（延迟创建，避免 RuntimeError）
+FONT_PARAMS = {
+    "hero":       {"family": "Microsoft YaHei", "size": 20, "weight": "bold"},
+    "heading":    {"family": "Microsoft YaHei", "size": 13, "weight": "bold"},
+    "body":       {"family": "Microsoft YaHei", "size": 12},
+    "small":      {"family": "Microsoft YaHei", "size": 10},
+}
+
+PADING = {
+    "xs": 3,
+    "sm": 6,
+    "md": 10,
+    "lg": 14,
+    "xl": 18,
+}
 
 DATA_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "DATA")
 DATA_FILE = os.path.join(DATA_DIR, "学生成绩表.xlsx")
@@ -29,6 +66,8 @@ class StudentGradeApp(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+        # 延迟创建字体（此时根窗口已存在）
+        self._fonts = {k: ctk.CTkFont(**v) for k, v in FONT_PARAMS.items()}
         self.grades = {}
         self._ensure_data_dir()
         self._load_data()
@@ -43,37 +82,29 @@ class StudentGradeApp(ctk.CTk):
 
     def _setup_window(self):
         self.title("学生成绩管理系统")
-        self.geometry("960x640")
-        self.minsize(800, 520)
+        self.geometry("1000x580")
+        self.minsize(800, 480)
+        self.configure(fg_color=COLORS["bg"])
         self._center_window()
 
     def _center_window(self):
         self.update_idletasks()
-        x = (self.winfo_screenwidth()  - 960) // 2
-        y = (self.winfo_screenheight() - 640) // 2
+        x = (self.winfo_screenwidth()  - 1000) // 2
+        y = (self.winfo_screenheight() - 580) // 2
         self.geometry(f"+{x}+{y}")
 
     # ==================== 构建 UI ====================
 
     def _build_ui(self):
         main = ctk.CTkFrame(self, fg_color="transparent")
-        main.pack(fill="both", expand=True, padx=16, pady=(12, 8))
+        main.pack(fill="both", expand=True, padx=PADING["lg"], pady=(PADING["lg"], PADING["md"]))
 
-        # ── 标题 ──
-        ctk.CTkLabel(
-            main, text="📊  学生成绩管理系统",
-            font=ctk.CTkFont(size=24, weight="bold"),
-        ).pack(pady=(0, 4))
+        # ---- 标题区 ----
+        self._build_header(main)
 
-        ctk.CTkLabel(
-            main, text="字典操作  |  数据持久化",
-            font=ctk.CTkFont(size=12),
-            text_color="gray60",
-        ).pack(pady=(0, 10))
-
-        # ── 左右分栏 ──
+        # ---- 左右分栏 ----
         body = ctk.CTkFrame(main, fg_color="transparent")
-        body.pack(fill="both", expand=True)
+        body.pack(fill="both", expand=True, pady=(PADING["md"], 0))
 
         # 左侧：Treeview
         self._build_tree(body)
@@ -81,104 +112,117 @@ class StudentGradeApp(ctk.CTk):
         # 右侧：操作面板
         self._build_sidepanel(body)
 
-    # ── 左侧 Treeview ──
+    def _build_header(self, parent):
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.pack(fill="x", pady=(0, PADING["xs"]))
+        ctk.CTkLabel(header, text="📊  学生成绩管理系统", font=self._fonts["hero"], text_color=COLORS["text"]).pack(side="left")
+        ctk.CTkLabel(header, text="  字典操作  |  数据持久化  |  Excel 导入导出", font=self._fonts["small"], text_color=COLORS["text_muted"]).pack(side="left", padx=(PADING["sm"], 0), pady=(4, 0))
+
+    # ---- 左侧 Treeview ----
     def _build_tree(self, parent):
-        left = ctk.CTkFrame(parent, corner_radius=12)
-        left.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        left = ctk.CTkFrame(parent, corner_radius=14, fg_color=COLORS["card"], border_color=COLORS["card_border"], border_width=1)
+        left.pack(side="left", fill="both", expand=True, padx=(0, PADING["sm"]))
 
-        ctk.CTkLabel(left, text="📋  成绩列表", font=ctk.CTkFont(size=14, weight="bold")).pack(
-            anchor="w", padx=12, pady=(10, 6)
-        )
+        # 标题
+        ctk.CTkLabel(left, text="📋  成绩列表", font=self._fonts["heading"], text_color=COLORS["text"]).pack(anchor="w", padx=PADING["md"], pady=(PADING["md"], PADING["sm"]))
 
-        # Treeview 容器（用 tk.Frame 包裹 ttk.Treeview）
+        # 统计标签
+        self._tree_stats = ctk.CTkLabel(left, text="总人数: 0", font=self._fonts["small"], text_color=COLORS["text_muted"], anchor="w")
+        self._tree_stats.pack(anchor="w", padx=PADING["md"], pady=(0, PADING["sm"]))
+
+        # Treeview 容器
         tree_frame = ctk.CTkFrame(left, fg_color="transparent")
-        tree_frame.pack(fill="both", expand=True, padx=8, pady=(0, 10))
+        tree_frame.pack(fill="both", expand=True, padx=PADING["md"], pady=(0, PADING["md"]))
+
+        # 配置 ttk.Style
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Treeview", background=COLORS["tree_bg"], foreground=COLORS["tree_fg"], fieldbackground=COLORS["tree_bg"], borderwidth=0, rowheight=32, font=("Microsoft YaHei", 14))
+        style.configure("Treeview.Heading", background=COLORS["tree_heading"], foreground=COLORS["text"], font=("Microsoft YaHei", 15, "bold"))
+        style.map("Treeview", background=[("selected", COLORS["primary"])])
 
         # 用 ttk.Treeview（customtkinter 没有 CTkTreeview）
-        self._tree = ttk.Treeview(
-            tree_frame,
-            columns=("name", "score"),
-            show="headings",
-            height=30,
-        )
+        self._tree = ttk.Treeview(tree_frame, columns=("name", "score"), show="headings", height=15)
         self._tree.heading("name", text="姓名")
         self._tree.heading("score", text="成绩")
         self._tree.column("name", width=140, anchor="center")
         self._tree.column("score", width=80, anchor="center")
         self._tree.pack(side="left", fill="both", expand=True)
 
-        scroll = ctk.CTkScrollbar(tree_frame, command=self._tree.yview)
+        scroll = ctk.CTkScrollbar(tree_frame, command=self._tree.yview, width=12)
         self._tree.configure(yscrollcommand=scroll.set)
         scroll.pack(side="right", fill="y")
 
         self._tree.bind("<Double-Button-1>", lambda _: self._on_double_click())
 
-    # ── 右侧操作面板 ──
+    # ---- 右侧操作面板 ----
     def _build_sidepanel(self, parent):
-        right = ctk.CTkScrollableFrame(parent, width=300, corner_radius=12)
-        right.pack(side="right", fill="both", padx=(8, 0))
-        right._scrollbar.configure(width=6)
+        right = ctk.CTkFrame(parent, width=260, corner_radius=12, fg_color=COLORS["card"], border_color=COLORS["card_border"], border_width=1)
+        right.pack(side="right", fill="both", padx=(PADING["sm"], 0))
+        right.pack_propagate(False)
 
-        # ── 查询 ──
-        self._section(right, "🔍  查询成绩")
-        q_frame = ctk.CTkFrame(right, fg_color="transparent")
-        q_frame.pack(fill="x", padx=12, pady=(0, 8))
-        self._q_entry = ctk.CTkEntry(q_frame, placeholder_text="输入姓名")
-        self._q_entry.pack(fill="x", pady=3)
-        ctk.CTkButton(q_frame, text="查  询", height=34, command=self._query).pack(fill="x", pady=3)
+        inner = ctk.CTkScrollableFrame(right, fg_color="transparent")
+        inner.pack(fill="both", expand=True)
+        inner._scrollbar.configure(width=4)
+
+        # ---- 查询 ----
+        self._section(inner, "🔍 查询成绩")
+        q_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        q_frame.pack(fill="x", padx=PADING["md"], pady=(0, PADING["xs"]))
+
+        self._q_entry = ctk.CTkEntry(q_frame, placeholder_text="输入姓名", height=28, fg_color=COLORS["input_bg"], font=self._fonts["body"])
+        self._q_entry.pack(fill="x", pady=(0, PADING["xs"]))
+        ctk.CTkButton(q_frame, text="查询", height=28, font=self._fonts["body"], corner_radius=8, fg_color=COLORS["primary"], hover_color=COLORS["primary_hover"], command=self._query).pack(fill="x")
         self._q_entry.bind("<Return>", lambda _: self._query())
 
-        # ── 添加/修改 ──
-        self._section(right, "✏️  添加 / 修改")
-        a_frame = ctk.CTkFrame(right, fg_color="transparent")
-        a_frame.pack(fill="x", padx=12, pady=(0, 8))
-        self._name_entry = ctk.CTkEntry(a_frame, placeholder_text="姓名")
-        self._name_entry.pack(fill="x", pady=3)
-        self._score_entry = ctk.CTkEntry(a_frame, placeholder_text="成绩 (0-100)")
-        self._score_entry.pack(fill="x", pady=3)
-        ctk.CTkButton(a_frame, text="保  存", height=34, command=self._save).pack(fill="x", pady=3)
+        # ---- 添加/修改 ----
+        self._section(inner, "✏️ 添加 / 修改")
+        a_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        a_frame.pack(fill="x", padx=PADING["md"], pady=(0, PADING["xs"]))
+
+        self._name_entry = ctk.CTkEntry(a_frame, placeholder_text="姓名", height=28, fg_color=COLORS["input_bg"], font=self._fonts["body"])
+        self._name_entry.pack(fill="x", pady=(0, PADING["xs"]))
+        self._score_entry = ctk.CTkEntry(a_frame, placeholder_text="成绩 (0-100)", height=28, fg_color=COLORS["input_bg"], font=self._fonts["body"])
+        self._score_entry.pack(fill="x", pady=(0, PADING["xs"]))
+        ctk.CTkButton(a_frame, text="保存", height=28, font=self._fonts["heading"], corner_radius=8, fg_color=COLORS["success"], hover_color="#059669", command=self._save).pack(fill="x")
         self._name_entry.bind("<Return>", lambda _: self._score_entry.focus())
         self._score_entry.bind("<Return>", lambda _: self._save())
 
-        # ── 删除 ──
-        self._section(right, "🗑️  删除成绩")
-        d_frame = ctk.CTkFrame(right, fg_color="transparent")
-        d_frame.pack(fill="x", padx=12, pady=(0, 8))
-        self._del_entry = ctk.CTkEntry(d_frame, placeholder_text="输入姓名")
-        self._del_entry.pack(fill="x", pady=3)
-        ctk.CTkButton(
-            d_frame, text="删  除", height=34,
-            fg_color="#E53935", hover_color="#C62828",
-            command=self._delete,
-        ).pack(fill="x", pady=3)
+        # ---- 删除 ----
+        self._section(inner, "🗑️ 删除成绩")
+        d_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        d_frame.pack(fill="x", padx=PADING["md"], pady=(0, PADING["xs"]))
+
+        self._del_entry = ctk.CTkEntry(d_frame, placeholder_text="输入姓名", height=28, fg_color=COLORS["input_bg"], font=self._fonts["body"])
+        self._del_entry.pack(fill="x", pady=(0, PADING["xs"]))
+        ctk.CTkButton(d_frame, text="删除", height=28, font=self._fonts["body"], corner_radius=8, fg_color=COLORS["danger"], hover_color=COLORS["danger_hover"], command=self._delete).pack(fill="x")
         self._del_entry.bind("<Return>", lambda _: self._delete())
 
-        # ── 导出 ──
-        self._section(right, "📁  导出数据")
-        e_frame = ctk.CTkFrame(right, fg_color="transparent")
-        e_frame.pack(fill="x", padx=12, pady=(0, 8))
-        ctk.CTkButton(e_frame, text="📊  Excel", height=34, command=self._export_excel).pack(fill="x", pady=3)
-        ctk.CTkButton(e_frame, text="📝  文本", height=34, command=self._export_text).pack(fill="x", pady=3)
+        # ---- 导出 ----
+        self._section(inner, "📁 导出数据")
+        e_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        e_frame.pack(fill="x", padx=PADING["md"], pady=(0, PADING["xs"]))
 
-        # ── 统计 ──
-        self._section(right, "📈  统计信息")
-        s_frame = ctk.CTkFrame(right, fg_color="transparent")
-        s_frame.pack(fill="x", padx=12, pady=(0, 12))
-        self._lbl_count = ctk.CTkLabel(s_frame, text="总人数: 0", anchor="w")
-        self._lbl_count.pack(fill="x", pady=2)
-        self._lbl_avg = ctk.CTkLabel(s_frame, text="平均分: —", anchor="w")
-        self._lbl_avg.pack(fill="x", pady=2)
-        self._lbl_max = ctk.CTkLabel(s_frame, text="最高分: —", anchor="w")
-        self._lbl_max.pack(fill="x", pady=2)
-        self._lbl_min = ctk.CTkLabel(s_frame, text="最低分: —", anchor="w")
-        self._lbl_min.pack(fill="x", pady=2)
+        ctk.CTkButton(e_frame, text="📊 导出 Excel", height=28, font=self._fonts["body"], corner_radius=8, command=self._export_excel).pack(fill="x", pady=(0, PADING["xs"]))
+        ctk.CTkButton(e_frame, text="📝 导出文本", height=28, font=self._fonts["body"], corner_radius=8, fg_color=COLORS["secondary"], hover_color="#334155", command=self._export_text).pack(fill="x")
 
-    # ── 辅助：分区标题 ──
+        # ---- 统计 ----
+        self._section(inner, "📈 统计信息")
+        s_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        s_frame.pack(fill="x", padx=PADING["md"], pady=(0, PADING["md"]))
+
+        self._lbl_count = ctk.CTkLabel(s_frame, text="总人数: 0", anchor="w", font=self._fonts["small"], text_color=COLORS["text"])
+        self._lbl_count.pack(fill="x", pady=1)
+        self._lbl_avg = ctk.CTkLabel(s_frame, text="平均分: —", anchor="w", font=self._fonts["small"], text_color=COLORS["text"])
+        self._lbl_avg.pack(fill="x", pady=1)
+        self._lbl_max = ctk.CTkLabel(s_frame, text="最高分: —", anchor="w", font=self._fonts["small"], text_color=COLORS["text"])
+        self._lbl_max.pack(fill="x", pady=1)
+        self._lbl_min = ctk.CTkLabel(s_frame, text="最低分: —", anchor="w", font=self._fonts["small"], text_color=COLORS["text"])
+        self._lbl_min.pack(fill="x", pady=1)
+
+    # ---- 辅助：分区标题 ----
     def _section(self, parent, text: str):
-        ctk.CTkLabel(
-            parent, text=text,
-            font=ctk.CTkFont(size=13, weight="bold"),
-        ).pack(anchor="w", padx=12, pady=(10, 4))
+        ctk.CTkLabel(parent, text=text, font=self._fonts["heading"], text_color=COLORS["text"]).pack(anchor="w", padx=PADING["md"], pady=(PADING["md"], PADING["xs"]))
 
     # ==================== 数据逻辑 ====================
 
@@ -191,6 +235,7 @@ class StudentGradeApp(ctk.CTk):
 
     def _refresh_stats(self):
         n = len(self.grades)
+        self._tree_stats.configure(text=f"总人数: {n}")
         if n == 0:
             self._lbl_count.configure(text="总人数: 0")
             self._lbl_avg.configure(text="平均分: —")
@@ -203,7 +248,7 @@ class StudentGradeApp(ctk.CTk):
         self._lbl_max.configure(text=f"最高分: {max(scores):.1f}")
         self._lbl_min.configure(text=f"最低分: {min(scores):.1f}")
 
-    # ── 查询 ──
+    # ---- 查询 ----
     def _query(self):
         name = self._q_entry.get().strip()
         if not name:
@@ -215,7 +260,7 @@ class StudentGradeApp(ctk.CTk):
             messagebox.showwarning("查询结果", f"未找到学生: {name}")
         self._q_entry.delete(0, "end")
 
-    # ── 保存 ──
+    # ---- 保存 ----
     def _save(self):
         name  = self._name_entry.get().strip()
         score_str = self._score_entry.get().strip()
@@ -240,7 +285,7 @@ class StudentGradeApp(ctk.CTk):
         self._score_entry.delete(0, "end")
         self._name_entry.focus()
 
-    # ── 删除 ──
+    # ---- 删除 ----
     def _delete(self):
         name = self._del_entry.get().strip()
         if not name:
@@ -256,7 +301,7 @@ class StudentGradeApp(ctk.CTk):
             messagebox.showinfo("成功", f"已删除 {name}")
         self._del_entry.delete(0, "end")
 
-    # ── 双击填充 ──
+    # ---- 双击填充 ----
     def _on_double_click(self):
         sel = self._tree.selection()
         if not sel:
@@ -302,21 +347,12 @@ class StudentGradeApp(ctk.CTk):
         if not self.grades:
             messagebox.showwarning("提示", "没有数据可导出")
             return
-        path = filedialog.asksaveasfilename(
-            defaultextension=".xlsx",
-            filetypes=[("Excel 文件", "*.xlsx")],
-            initialfile="学生成绩表.xlsx",
-        )
+        path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel 文件", "*.xlsx")], initialfile="学生成绩表.xlsx")
         if not path:
             return
         try:
             df   = pd.DataFrame(sorted(self.grades.items()), columns=["姓名", "成绩"])
-            stats = pd.DataFrame([
-                ["总人数", len(self.grades)],
-                ["平均分", f"{sum(self.grades.values())/len(self.grades):.2f}"],
-                ["最高分", max(self.grades.values())],
-                ["最低分", min(self.grades.values())],
-            ], columns=["统计项", "值"])
+            stats = pd.DataFrame([["总人数", len(self.grades)], ["平均分", f"{sum(self.grades.values())/len(self.grades):.2f}"], ["最高分", max(self.grades.values())], ["最低分", min(self.grades.values())]], columns=["统计项", "值"])
             with pd.ExcelWriter(path, engine="openpyxl") as w:
                 df.to_excel(w,   sheet_name="成绩表", index=False)
                 stats.to_excel(w, sheet_name="统计信息", index=False)
@@ -328,11 +364,7 @@ class StudentGradeApp(ctk.CTk):
         if not self.grades:
             messagebox.showwarning("提示", "没有数据可导出")
             return
-        path = filedialog.asksaveasfilename(
-            defaultextension=".txt",
-            filetypes=[("文本文件", "*.txt")],
-            initialfile="学生成绩表.txt",
-        )
+        path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("文本文件", "*.txt")], initialfile="学生成绩表.txt")
         if not path:
             return
         try:

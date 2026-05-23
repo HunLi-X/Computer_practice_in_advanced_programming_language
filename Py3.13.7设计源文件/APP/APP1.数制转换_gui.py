@@ -1,20 +1,58 @@
 # ==========================================
 # App1. 数制转换 - GUI版本 (CustomTkinter 美化)
-# 支持任意进制之间的转换
+# 支持任意进制之间的转换 (2-36进制)
 # ==========================================
 
 import sys
 import os
 
-# ── 依赖检查 ──
+# ---- 依赖检查 ----
 try:
     import customtkinter as ctk
 except ImportError:
-    print("正在安装 customtkinter...")
+    import subprocess
     subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter", "-q"])
     import customtkinter as ctk
 
-# ── 进制转换核心 ──
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+# ---- 设计系统（颜色）----
+COLORS = {
+    "bg":           "#0A0E1A",
+    "card":         "#131B2E",
+    "card_border":  "#1E2D4D",
+    "primary":      "#6366F1",
+    "primary_hover":"#4F46E5",
+    "secondary":    "#1E293B",
+    "accent":       "#818CF8",
+    "success":      "#10B981",
+    "warning":      "#F59E0B",
+    "error":        "#EF4444",
+    "text":         "#E2E8F0",
+    "text_muted":   "#64748B",
+    "input_bg":     "#0F172A",
+}
+
+# 字体参数（延迟创建，避免 RuntimeError）
+FONT_PARAMS = {
+    "hero":       {"family": "Microsoft YaHei", "size": 20, "weight": "bold"},
+    "heading":    {"family": "Microsoft YaHei", "size": 13, "weight": "bold"},
+    "body":       {"family": "Microsoft YaHei", "size": 12},
+    "small":      {"family": "Microsoft YaHei", "size": 10},
+    "mono_big":   {"family": "Cascadia Code", "size": 22, "weight": "bold"},
+    "mono":       {"family": "Cascadia Code", "size": 11},
+}
+
+PADDING = {
+    "xs": 3,
+    "sm": 6,
+    "md": 10,
+    "lg": 14,
+    "xl": 18,
+}
+
+# ---- 进制转换核心 ----
 def convert_base(value: str, from_base: int, to_base: int) -> str | None:
     """任意进制互转 (2-36)"""
     try:
@@ -23,30 +61,33 @@ def convert_base(value: str, from_base: int, to_base: int) -> str | None:
             return bin(decimal_value)[2:]
         if to_base == 8:
             return oct(decimal_value)[2:]
+        if to_base == 10:
+            return str(decimal_value)
         if to_base == 16:
             return hex(decimal_value)[2:].upper()
-        digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        if decimal_value == 0:
-            return "0"
-        is_neg = decimal_value < 0
-        decimal_value = abs(decimal_value)
-        result = ""
-        while decimal_value:
-            result = digits[decimal_value % to_base] + result
-            decimal_value //= to_base
-        return "-" + result if is_neg else result
-    except (ValueError, TypeError):
+        return _decimal_to_base(decimal_value, to_base)
+    except ValueError:
         return None
 
+def _decimal_to_base(n: int, base: int) -> str:
+    if n == 0:
+        return "0"
+    digits = []
+    while n > 0:
+        rem = n % base
+        digits.append(chr(ord("A") + rem - 10) if rem >= 10 else str(rem))
+        n //= base
+    return "".join(reversed(digits))
 
+# ---- 主应用 ----
 class NumberBaseApp(ctk.CTk):
-    """数制转换主应用"""
+    """数制转换主窗口"""
 
-    # ── 进制选项 ──
     BASES = ["2", "8", "10", "16", "32", "36"]
 
     def __init__(self):
         super().__init__()
+        self._fonts = {k: ctk.CTkFont(**v) for k, v in FONT_PARAMS.items()}
         self._setup_window()
         self._build_ui()
         self._set_defaults()
@@ -55,172 +96,137 @@ class NumberBaseApp(ctk.CTk):
 
     def _setup_window(self):
         self.title("数制转换")
-        self.geometry("620x720")
-        self.minsize(520, 600)
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
+        self.geometry("680x560")
+        self.minsize(580, 480)
+        self.configure(fg_color=COLORS["bg"])
         self._center_window()
 
     def _center_window(self):
         self.update_idletasks()
-        x = (self.winfo_screenwidth() - 620) // 2
-        y = (self.winfo_screenheight() - 720) // 2
+        x = (self.winfo_screenwidth()  - 680) // 2
+        y = (self.winfo_screenheight() - 560) // 2
         self.geometry(f"+{x}+{y}")
+
+    def _set_defaults(self):
+        self.from_combo.set("10")
+        self.to_combo.set("2")
+        self.input_entry.focus()
+        self._do_convert()
 
     # ==================== 构建 UI ====================
 
     def _build_ui(self):
-        """构建全部界面"""
-        # ── 主滚动容器 ──
-        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        scroll.pack(fill="both", expand=True, padx=20, pady=(15, 10))
+        main = ctk.CTkFrame(self, fg_color="transparent")
+        main.pack(fill="both", expand=True, padx=PADDING["lg"], pady=PADDING["md"])
 
-        # ── 标题 ──
-        ctk.CTkLabel(
-            scroll,
-            text="🔢  数制转换器",
-            font=ctk.CTkFont(size=26, weight="bold"),
-        ).pack(pady=(10, 5))
+        # ---- 标题区（紧凑）----
+        header = ctk.CTkFrame(main, fg_color="transparent")
+        header.pack(fill="x", pady=(0, PADDING["sm"]))
+        ctk.CTkLabel(header, text="🔢  数制转换器", font=self._fonts["hero"], text_color=COLORS["text"]).pack(side="left")
+        ctk.CTkLabel(header, text="  支持 2~36 进制任意互转", font=self._fonts["small"], text_color=COLORS["text_muted"]).pack(side="left", padx=(PADDING["sm"], 0), pady=(4, 0))
 
-        ctk.CTkLabel(
-            scroll,
-            text="支持 2 ~ 36 进制任意互转",
-            font=ctk.CTkFont(size=13),
-            text_color="gray60",
-        ).pack(pady=(0, 15))
+        # ---- 输入卡片 ----
+        card_in = ctk.CTkFrame(main, corner_radius=12, fg_color=COLORS["card"], border_color=COLORS["card_border"], border_width=1)
+        card_in.pack(fill="x", pady=(0, PADDING["sm"]))
 
-        # ── 输入卡片 ──
-        self._build_input_card(scroll)
+        # 第一行：原进制 + 数值输入 + 目标进制
+        row1 = ctk.CTkFrame(card_in, fg_color="transparent")
+        row1.pack(fill="x", padx=PADDING["md"], pady=(PADDING["md"], PADDING["xs"]))
 
-        # ── 结果卡片 ──
-        self._build_result_card(scroll)
+        ctk.CTkLabel(row1, text="原进制", width=50, anchor="w", font=self._fonts["body"]).pack(side="left")
+        self.from_combo = ctk.CTkComboBox(row1, width=80, values=self.BASES, state="readonly", font=self._fonts["body"], dropdown_font=self._fonts["body"])
+        self.from_combo.pack(side="left", padx=(0, PADDING["sm"]))
+        self.from_combo.configure(command=lambda _: self._do_convert())
 
-        # ── 全部进制卡片 ──
-        self._build_all_bases_card(scroll)
-
-        # ── 底部按钮 ──
-        self._build_bottom_buttons(scroll)
-
-    # ── 输入卡片 ──
-    def _build_input_card(self, parent):
-        card = ctk.CTkFrame(parent, corner_radius=14)
-        card.pack(fill="x", pady=8, padx=4)
-        ctk.CTkLabel(
-            card, text="📥  输入数值", font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(anchor="w", padx=16, pady=(12, 6))
-
-        # 第一行：原进制
-        row1 = ctk.CTkFrame(card, fg_color="transparent")
-        row1.pack(fill="x", padx=16, pady=4)
-        ctk.CTkLabel(row1, text="原进制", width=70, anchor="w").pack(side="left")
-        self.from_combo = ctk.CTkComboBox(
-            row1, values=self.BASES, width=120, state="readonly"
-        )
-        self.from_combo.pack(side="left", padx=8)
-        self.from_combo.set("10")
-
-        # 第二行：输入
-        row2 = ctk.CTkFrame(card, fg_color="transparent")
-        row2.pack(fill="x", padx=16, pady=4)
-        ctk.CTkLabel(row2, text="数值", width=70, anchor="w").pack(side="left")
-        self.input_entry = ctk.CTkEntry(
-            row2, placeholder_text="请输入数值，如 255 / FF / 1010 ...", height=36
-        )
-        self.input_entry.pack(side="left", fill="x", expand=True, padx=8)
+        self.input_entry = ctk.CTkEntry(row1, placeholder_text="输入数值", height=34, font=self._fonts["mono"], fg_color=COLORS["input_bg"])
+        self.input_entry.pack(side="left", fill="x", expand=True, padx=PADDING["xs"])
+        self.input_entry.bind("<KeyRelease>", lambda _: self._do_convert())
         self.input_entry.bind("<Return>", lambda _: self._do_convert())
 
-        # 第三行：目标进制
-        row3 = ctk.CTkFrame(card, fg_color="transparent")
-        row3.pack(fill="x", padx=16, pady=(4, 12))
-        ctk.CTkLabel(row3, text="目标进制", width=70, anchor="w").pack(side="left")
-        self.to_combo = ctk.CTkComboBox(
-            row3, values=self.BASES, width=120, state="readonly"
-        )
-        self.to_combo.pack(side="left", padx=8)
-        self.to_combo.set("2")
+        ctk.CTkLabel(row1, text="→", font=self._fonts["heading"], text_color=COLORS["accent"]).pack(side="left", padx=PADDING["xs"])
 
-    # ── 结果卡片 ──
-    def _build_result_card(self, parent):
-        card = ctk.CTkFrame(parent, corner_radius=14)
-        card.pack(fill="x", pady=8, padx=4)
-        ctk.CTkLabel(
-            card, text="🎯  转换结果", font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(anchor="w", padx=16, pady=(12, 8))
+        self.to_combo = ctk.CTkComboBox(row1, width=80, values=self.BASES, state="readonly", font=self._fonts["body"], dropdown_font=self._fonts["body"])
+        self.to_combo.pack(side="left", padx=(0, PADDING["sm"]))
+        self.to_combo.configure(command=lambda _: self._do_convert())
 
-        self.result_label = ctk.CTkLabel(
-            card,
-            text="—",
-            font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#1E90FF",
-        )
-        self.result_label.pack(pady=(0, 12), padx=16)
+        ctk.CTkButton(row1, text="转换", width=60, height=32, font=self._fonts["heading"], corner_radius=8, fg_color=COLORS["primary"], hover_color=COLORS["primary_hover"], command=self._do_convert).pack(side="left", padx=(PADDING["xs"], 0))
+        ctk.CTkButton(row1, text="清空", width=50, height=32, font=self._fonts["body"], corner_radius=8, fg_color=COLORS["secondary"], hover_color="#334155", command=self._do_clear).pack(side="left", padx=(PADDING["xs"], 0))
 
-    # ── 全部进制卡片 ──
-    def _build_all_bases_card(self, parent):
-        card = ctk.CTkFrame(parent, corner_radius=14)
-        card.pack(fill="x", pady=8, padx=4)
-        ctk.CTkLabel(
-            card, text="📊  全部常用进制", font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(anchor="w", padx=16, pady=(12, 8))
+        # 结果行
+        row_result = ctk.CTkFrame(card_in, fg_color="transparent")
+        row_result.pack(fill="x", padx=PADDING["md"], pady=(0, PADDING["md"]))
 
-        self._add_base_row(card, "二进制  ", "bin")
-        self._add_base_row(card, "八进制  ", "oct")
-        self._add_base_row(card, "十进制  ", "dec")
-        self._add_base_row(card, "十六进制", "hex")
+        self.result_label = ctk.CTkLabel(row_result, text="—", font=self._fonts["mono_big"], text_color=COLORS["accent"], anchor="w")
+        self.result_label.pack(side="left", fill="x", expand=True)
 
-        ctk.CTkFrame(card, height=10, fg_color="transparent").pack()
+        self.status_label = ctk.CTkLabel(row_result, text="等待输入...", font=self._fonts["small"], text_color=COLORS["text_muted"])
+        self.status_label.pack(side="right")
 
-    def _add_base_row(self, parent, label: str, key: str):
-        row = ctk.CTkFrame(parent, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=3)
-        ctk.CTkLabel(row, text=label, width=90, anchor="w", text_color="gray60").pack(side="left")
-        lbl = ctk.CTkLabel(row, text="—", anchor="w", font=ctk.CTkFont(size=13))
-        lbl.pack(side="left", fill="x", expand=True)
-        setattr(self, f"label_{key}", lbl)
+        # ---- 下半部分：左右分栏 ----
+        bottom = ctk.CTkFrame(main, fg_color="transparent")
+        bottom.pack(fill="both", expand=True, pady=(0, 0))
 
-    # ── 底部按钮 ──
-    def _build_bottom_buttons(self, parent):
-        frame = ctk.CTkFrame(parent, fg_color="transparent")
-        frame.pack(pady=(10, 20))
+        # 左侧：全部常用进制
+        card_bases = ctk.CTkFrame(bottom, corner_radius=12, fg_color=COLORS["card"], border_color=COLORS["card_border"], border_width=1)
+        card_bases.pack(side="left", fill="both", expand=True, padx=(0, PADDING["xs"]))
 
-        ctk.CTkButton(
-            frame, text="▶  转  换", width=140, height=40,
-            font=ctk.CTkFont(size=14, weight="bold"),
-            command=self._do_convert,
-        ).pack(side="left", padx=10)
+        ctk.CTkLabel(card_bases, text="📊  常用进制一览", font=self._fonts["heading"], text_color=COLORS["text"]).pack(anchor="w", padx=PADDING["md"], pady=(PADDING["md"], PADDING["xs"]))
 
-        ctk.CTkButton(
-            frame, text="✕  清  空", width=140, height=40,
-            font=ctk.CTkFont(size=14),
-            fg_color="gray30", hover_color="gray40",
-            command=self._do_clear,
-        ).pack(side="left", padx=10)
+        for label, key, base in [("二进制", "bin", "2"), ("八进制", "oct", "8"), ("十进制", "dec", "10"), ("十六进制", "hex", "16")]:
+            row = ctk.CTkFrame(card_bases, fg_color="transparent")
+            row.pack(fill="x", padx=PADDING["md"], pady=1)
+            ctk.CTkLabel(row, text=label, width=60, anchor="w", font=self._fonts["small"], text_color=COLORS["text_muted"]).pack(side="left")
+            value_label = ctk.CTkLabel(row, text="—", anchor="w", font=self._fonts["mono"])
+            value_label.pack(side="left", fill="x", expand=True)
+            setattr(self, f"label_{key}", value_label)
+
+        ctk.CTkFrame(card_bases, height=6, fg_color="transparent").pack()
+
+        # 右侧：使用说明
+        card_help = ctk.CTkFrame(bottom, corner_radius=12, fg_color=COLORS["secondary"], border_color=COLORS["card_border"], border_width=1)
+        card_help.pack(side="right", fill="both", expand=True, padx=(PADDING["xs"], 0))
+
+        ctk.CTkLabel(card_help, text="💡  使用说明", font=self._fonts["heading"], text_color=COLORS["text"]).pack(anchor="w", padx=PADDING["md"], pady=(PADDING["md"], PADDING["xs"]))
+
+        help_lines = [
+            "• 支持 0-9, A-Z (不区分大小写)",
+            "• 二进制: 0-1  |  八进制: 0-7",
+            "• 十进制: 0-9  |  十六进制: 0-9,A-F",
+            "• 三十六进制: 0-9, A-Z",
+            "",
+            "示例:",
+            "• 255 (十进制) = FF (十六进制)",
+            "• 1010 (二进制) = 10 (十进制)",
+        ]
+        help_text = ctk.CTkTextbox(card_help, height=120, font=self._fonts["small"], fg_color="transparent", border_width=0)
+        help_text.pack(fill="both", expand=True, padx=PADDING["md"], pady=(0, PADDING["md"]))
+        help_text.insert("0.0", "\n".join(help_lines))
+        help_text.configure(state="disabled")
 
     # ==================== 逻辑 ====================
-
-    def _set_defaults(self):
-        self.input_entry.focus()
 
     def _do_convert(self):
         value = self.input_entry.get().strip().upper()
         if not value:
-            self.result_label.configure(text="⚠ 请输入数值", text_color="#FF8C00")
+            self.result_label.configure(text="—", text_color=COLORS["accent"])
+            self.status_label.configure(text="等待输入...", text_color=COLORS["text_muted"])
+            for key in ("bin", "oct", "dec", "hex"):
+                getattr(self, f"label_{key}").configure(text="—")
             return
 
         try:
-            from_base = int(self.from_combo.get())
-            to_base   = int(self.to_combo.get())
-            decimal_val = int(value, from_base)
+            from_b = int(self.from_combo.get())
+            to_b = int(self.to_combo.get())
+            decimal_val = int(value, from_b)
         except ValueError:
-            self.result_label.configure(
-                text=f"⚠ 输入不是有效的 {from_base} 进制数", text_color="#FF4444"
-            )
+            self.result_label.configure(text="⚠ 输入错误", text_color=COLORS["error"])
+            self.status_label.configure(text=f"输入不是有效的 {from_b} 进制数", text_color=COLORS["error"])
             return
 
-        result = convert_base(value, from_base, to_base)
-        self.result_label.configure(text=result or "—", text_color="#1E90FF")
+        result = convert_base(value, from_b, to_b)
+        self.result_label.configure(text=result or "—", text_color=COLORS["accent"])
+        self.status_label.configure(text=f"{from_b} → {to_b}  转换成功", text_color=COLORS["success"])
 
-        # 更新全部进制
         for base, key in [(2, "bin"), (8, "oct"), (10, "dec"), (16, "hex")]:
             val = convert_base(str(decimal_val), 10, base)
             lbl = getattr(self, f"label_{key}")
@@ -228,7 +234,8 @@ class NumberBaseApp(ctk.CTk):
 
     def _do_clear(self):
         self.input_entry.delete(0, "end")
-        self.result_label.configure(text="—", text_color="#1E90FF")
+        self.result_label.configure(text="—", text_color=COLORS["accent"])
+        self.status_label.configure(text="等待输入...", text_color=COLORS["text_muted"])
         for key in ("bin", "oct", "dec", "hex"):
             getattr(self, f"label_{key}").configure(text="—")
         self.from_combo.set("10")
@@ -239,4 +246,5 @@ class NumberBaseApp(ctk.CTk):
 # ==================== 入口 ====================
 
 if __name__ == "__main__":
-    NumberBaseApp().mainloop()
+    app = NumberBaseApp()
+    app.mainloop()
