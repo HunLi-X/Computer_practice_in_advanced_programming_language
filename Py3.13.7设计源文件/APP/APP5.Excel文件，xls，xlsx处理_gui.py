@@ -7,6 +7,9 @@ import sys
 import os
 import pandas as pd
 
+import tkinter as tk
+import tkinter.ttk as ttk
+
 # ── 依赖检查 ──
 try:
     import customtkinter as ctk
@@ -159,7 +162,8 @@ class ExcelProcessorApp(ctk.CTk):
         tree_container = ctk.CTkFrame(card, fg_color="transparent")
         tree_container.pack(fill="both", expand=True, padx=16, pady=(0, 12))
 
-        self.tree = ctk.CTkTreeview(
+        # 用 ttk.Treeview（customtkinter 没有 CTkTreeview）
+        self.tree = ttk.Treeview(
             tree_container, show="headings", height=8,
         )
         self.tree.pack(side="left", fill="both", expand=True)

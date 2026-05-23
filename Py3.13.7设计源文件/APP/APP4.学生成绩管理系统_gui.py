@@ -99,7 +99,7 @@ class StudentGradeApp(ctk.CTk):
             tree_frame,
             columns=("name", "score"),
             show="headings",
-            height=18,
+            height=30,
         )
         self._tree.heading("name", text="姓名")
         self._tree.heading("score", text="成绩")
