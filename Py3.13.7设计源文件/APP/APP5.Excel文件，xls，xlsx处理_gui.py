@@ -1,285 +1,356 @@
 # ==========================================
-# App5. Excel 自动化处理 - GUI版本
+# App5. Excel 自动化处理 - GUI版本 (CustomTkinter 美化)
 # 功能: 读取Excel，按"部门"拆分成多个文件
 # ==========================================
 
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import pandas as pd
+import sys
 import os
+import pandas as pd
 
-class ExcelProcessorApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Excel 文件处理 - GUI")
-        self.root.geometry("900x650")
-        self.root.configure(bg="#f0f0f0")
+# ── 依赖检查 ──
+try:
+    import customtkinter as ctk
+    from tkinter import filedialog, messagebox
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter", "-q"])
+    import customtkinter as ctk
+    from tkinter import filedialog, messagebox
 
-        # 获取脚本所在目录的上级目录（项目根目录）
-        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.default_file = os.path.join(script_dir, 'DATA', 'groupby_test_auto_中原工学院教职工名单.xlsx')
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+# ── 路径常量 ──
+SCRIPT_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_FILE = os.path.join(SCRIPT_DIR, "DATA", "groupby_test_auto_中原工学院教职工名单.xlsx")
+OUTPUT_DIR   = os.path.join(SCRIPT_DIR, "DATA")
+
+
+class ExcelProcessorApp(ctk.CTk):
+    """Excel 文件处理主应用"""
+
+    def __init__(self):
+        super().__init__()
         self.source_file = None
-        self.df = None
+        self.df           = None
         self.departments = []
+        self.output_dir   = OUTPUT_DIR
+        self._setup_window()
+        self._build_ui()
+        self._auto_load_default()
 
-        # 设置默认输出目录
-        self.output_dir = os.path.join(script_dir, 'DATA')
+    # ==================== 窗口设置 ====================
 
-        # 创建主框架
-        main_frame = ttk.Frame(root, padding="20")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+    def _setup_window(self):
+        self.title("Excel 文件处理")
+        self.geometry("960x720")
+        self.minsize(800, 600)
+        self._center_window()
 
-        # 标题
-        title_label = ttk.Label(
-            main_frame,
-            text="Excel 文件处理",
-            font=("Helvetica", 18, "bold"),
-            foreground="#1E90FF"
+    def _center_window(self):
+        self.update_idletasks()
+        x = (self.winfo_screenwidth()  - 960) // 2
+        y = (self.winfo_screenheight() - 720) // 2
+        self.geometry(f"+{x}+{y}")
+
+    # ==================== 构建 UI ====================
+
+    def _build_ui(self):
+        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=20, pady=(15, 10))
+
+        # ── 标题 ──
+        ctk.CTkLabel(
+            scroll, text="📁  Excel 文件处理",
+            font=ctk.CTkFont(size=26, weight="bold"),
+        ).pack(pady=(10, 5))
+
+        ctk.CTkLabel(
+            scroll, text="按指定列拆分 Excel 为多个文件",
+            font=ctk.CTkFont(size=13),
+            text_color="gray60",
+        ).pack(pady=(0, 15))
+
+        # ── Step 1：选择文件 ──
+        self._build_file_card(scroll)
+
+        # ── Step 2：选择分组列 ──
+        self._build_column_card(scroll)
+
+        # ── Step 3：数据预览 ──
+        self._build_preview_card(scroll)
+
+        # ── Step 4：输出目录 + 执行 ──
+        self._build_action_card(scroll)
+
+    # ── Step 1 卡片 ──
+    def _build_file_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="x", pady=8, padx=4)
+
+        ctk.CTkLabel(
+            card, text="📂  1. 选择源文件",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).pack(anchor="w", padx=16, pady=(12, 8))
+
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=16, pady=(0, 12))
+
+        self.file_label = ctk.CTkLabel(
+            row, text="未选择文件", anchor="w",
+            font=ctk.CTkFont(size=12),
         )
-        title_label.pack(pady=15)
+        self.file_label.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
-        # 文件选择区域
-        file_frame = ttk.LabelFrame(main_frame, text="1. 选择源文件", padding="15")
-        file_frame.pack(fill=tk.X, pady=10)
+        ctk.CTkButton(
+            row, text="📂  浏览...", width=120, height=34,
+            command=self._browse_file,
+        ).pack(side="right")
 
-        self.file_label = ttk.Label(file_frame, text="未选择文件", font=("Helvetica", 10), foreground="#666666")
-        self.file_label.pack(side=tk.LEFT, padx=5, expand=True, fill=tk.X)
+    # ── Step 2 卡片 ──
+    def _build_column_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="x", pady=8, padx=4)
 
-        browse_btn = ttk.Button(file_frame, text="浏览...", command=self.browse_file, style="Accent.TButton")
-        browse_btn.pack(side=tk.RIGHT, padx=5)
+        ctk.CTkLabel(
+            card, text="📊  2. 选择分组列",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).pack(anchor="w", padx=16, pady=(12, 8))
 
-        # 分组列选择
-        column_frame = ttk.LabelFrame(main_frame, text="2. 选择分组列", padding="15")
-        column_frame.pack(fill=tk.X, pady=10)
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=16, pady=(0, 12))
 
-        ttk.Label(column_frame, text="分组列名:").pack(side=tk.LEFT, padx=5)
+        ctk.CTkLabel(row, text="分组列", width=70, anchor="w").pack(side="left")
 
-        self.column_var = tk.StringVar(value="部门")
-        self.column_combobox = ttk.Combobox(column_frame, textvariable=self.column_var, width=20, state="readonly")
-        self.column_combobox.pack(side=tk.LEFT, padx=5)
+        self.column_combo = ctk.CTkComboBox(
+            row, width=200, state="readonly",
+        )
+        self.column_combo.pack(side="left", padx=8)
 
-        refresh_btn = ttk.Button(column_frame, text="刷新列", command=self.refresh_columns)
-        refresh_btn.pack(side=tk.LEFT, padx=5)
+        ctk.CTkButton(
+            row, text="🔄  刷新列", width=110, height=32,
+            command=self._refresh_columns,
+        ).pack(side="left", padx=8)
 
-        # 预览区域
-        preview_frame = ttk.LabelFrame(main_frame, text="3. 数据预览", padding="10")
-        preview_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+    # ── Step 3 卡片 ──
+    def _build_preview_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="both", expand=True, pady=8, padx=4)
 
-        # 统计信息
-        stats_frame = ttk.Frame(preview_frame)
-        stats_frame.pack(fill=tk.X, pady=5)
+        ctk.CTkLabel(
+            card, text="📋  3. 数据预览",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).pack(anchor="w", padx=16, pady=(12, 8))
 
-        self.row_count_label = ttk.Label(stats_frame, text="总行数: 0", font=("Helvetica", 10))
-        self.row_count_label.pack(side=tk.LEFT, padx=10)
+        # 统计行
+        stats = ctk.CTkFrame(card, fg_color="transparent")
+        stats.pack(fill="x", padx=16, pady=(0, 6))
 
-        self.col_count_label = ttk.Label(stats_frame, text="总列数: 0", font=("Helvetica", 10))
-        self.col_count_label.pack(side=tk.LEFT, padx=10)
+        self.lbl_rows    = ctk.CTkLabel(stats, text="总行数: 0", font=ctk.CTkFont(size=11))
+        self.lbl_rows.pack(side="left", padx=12)
 
-        self.dept_count_label = ttk.Label(stats_frame, text="分组数: 0", font=("Helvetica", 10))
-        self.dept_count_label.pack(side=tk.LEFT, padx=10)
+        self.lbl_cols    = ctk.CTkLabel(stats, text="总列数: 0", font=ctk.CTkFont(size=11))
+        self.lbl_cols.pack(side="left", padx=12)
 
-        # Treeview 显示数据
-        self.tree_frame = ttk.Frame(preview_frame)
-        self.tree_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.lbl_depts   = ctk.CTkLabel(stats, text="分组数: 0", font=ctk.CTkFont(size=11))
+        self.lbl_depts.pack(side="left", padx=12)
 
-        self.tree = ttk.Treeview(self.tree_frame)
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Treeview 容器
+        tree_container = ctk.CTkFrame(card, fg_color="transparent")
+        tree_container.pack(fill="both", expand=True, padx=16, pady=(0, 12))
 
-        scrollbar_y = ttk.Scrollbar(self.tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tree = ctk.CTkTreeview(
+            tree_container, show="headings", height=8,
+        )
+        self.tree.pack(side="left", fill="both", expand=True)
 
-        scrollbar_x = ttk.Scrollbar(self.tree_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
-        scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+        tree_scroll = ctk.CTkScrollbar(tree_container, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=tree_scroll.set)
+        tree_scroll.pack(side="right", fill="y")
 
-        self.tree.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+    # ── Step 4 卡片 ──
+    def _build_action_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="x", pady=(8, 4), padx=4)
 
-        # 操作按钮
-        button_frame = ttk.Frame(main_frame)
-        button_frame.pack(fill=tk.X, pady=15)
+        ctk.CTkLabel(
+            card, text="🚀  4. 执行拆分",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).pack(anchor="w", padx=16, pady=(12, 8))
 
-        process_btn = ttk.Button(button_frame, text="开始拆分", command=self.process_excel, style="Accent.TButton")
-        process_btn.pack(side=tk.LEFT, padx=5)
+        # 输出目录行
+        dir_row = ctk.CTkFrame(card, fg_color="transparent")
+        dir_row.pack(fill="x", padx=16, pady=(0, 6))
 
-        clear_btn = ttk.Button(button_frame, text="清空", command=self.clear_data)
-        clear_btn.pack(side=tk.LEFT, padx=5)
+        ctk.CTkLabel(dir_row, text="输出目录", width=70, anchor="w").pack(side="left")
 
-        # 输出目录
-        output_frame = ttk.LabelFrame(main_frame, text="输出目录", padding="10")
-        output_frame.pack(fill=tk.X, pady=5)
+        self.output_label = ctk.CTkLabel(
+            dir_row, text=OUTPUT_DIR, anchor="w",
+            font=ctk.CTkFont(size=11), text_color="gray60",
+        )
+        self.output_label.pack(side="left", fill="x", expand=True, padx=8)
 
-        self.output_dir_label = ttk.Label(output_frame, text=f"当前目录: {os.getcwd()}", font=("Helvetica", 9), foreground="#666666")
-        self.output_dir_label.pack(anchor=tk.W)
-
-        change_dir_btn = ttk.Button(output_frame, text="更改输出目录", command=self.change_output_dir)
-        change_dir_btn.pack(anchor=tk.E)
-
-        # 更新输出目录标签
-        self.output_dir_label.config(text=f"输出目录: {self.output_dir}", foreground="#000000")
+        ctk.CTkButton(
+            dir_row, text="📁  更改", width=110, height=30,
+            command=self._change_output_dir,
+        ).pack(side="right")
 
         # 进度条
-        self.progress_var = tk.DoubleVar()
-        self.progress = ttk.Progressbar(main_frame, variable=self.progress_var, maximum=100)
-        self.progress.pack(fill=tk.X, pady=10)
+        self.progress = ctk.CTkProgressBar(
+            card, height=16, corner_radius=8,
+        )
+        self.progress.set(0)
+        self.progress.pack(fill="x", padx=16, pady=6)
 
         # 状态标签
-        self.status_label = ttk.Label(main_frame, text="准备就绪", font=("Helvetica", 10), foreground="#666666")
-        self.status_label.pack(pady=5)
-
-        # 配置样式
-        style = ttk.Style()
-        style.configure("Accent.TButton", font=("Helvetica", 11, "bold"), padding=(15, 8))
-
-        # 自动加载默认文件
-        if os.path.exists(self.default_file):
-            self.source_file = self.default_file
-            self.file_label.config(text=os.path.basename(self.default_file), foreground="#000000")
-            self.load_excel()
-
-    def browse_file(self):
-        """浏览选择Excel文件"""
-        filetypes = [
-            ("Excel文件", "*.xlsx *.xls"),
-            ("所有文件", "*.*")
-        ]
-        filepath = filedialog.askopenfilename(
-            title="选择Excel文件",
-            filetypes=filetypes
+        self.status_label = ctk.CTkLabel(
+            card, text="准备就绪", font=ctk.CTkFont(size=11),
+            text_color="gray60",
         )
+        self.status_label.pack(anchor="w", padx=16, pady=(0, 6))
 
-        if filepath:
-            self.source_file = filepath
-            self.file_label.config(text=os.path.basename(filepath), foreground="#000000")
-            self.load_excel()
+        # 按钮行
+        btn_row = ctk.CTkFrame(card, fg_color="transparent")
+        btn_row.pack(pady=(4, 12))
 
-    def load_excel(self):
-        """加载Excel文件"""
+        ctk.CTkButton(
+            btn_row, text="▶  开始拆分", width=160, height=42,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            corner_radius=10, command=self._process_excel,
+        ).pack(side="left", padx=10)
+
+        ctk.CTkButton(
+            btn_row, text="✕  清空", width=140, height=42,
+            font=ctk.CTkFont(size=14),
+            fg_color="gray30", hover_color="gray40",
+            corner_radius=10, command=self._clear_data,
+        ).pack(side="left", padx=10)
+
+    # ==================== 逻辑方法 ====================
+
+    def _auto_load_default(self):
+        if os.path.exists(DEFAULT_FILE):
+            self.source_file = DEFAULT_FILE
+            self.file_label.configure(text=os.path.basename(DEFAULT_FILE), text_color="#1E90FF")
+            self._load_excel()
+
+    def _browse_file(self):
+        path = filedialog.askopenfilename(
+            title="选择 Excel 文件",
+            filetypes=[("Excel 文件", "*.xlsx *.xls"), ("所有文件", "*.*")],
+        )
+        if path:
+            self.source_file = path
+            self.file_label.configure(text=os.path.basename(path), text_color="#1E90FF")
+            self._load_excel()
+
+    def _load_excel(self):
         try:
             self.df = pd.read_excel(self.source_file)
-            self.status_label.config(text="文件加载成功", foreground="#00AA00")
-            self.refresh_columns()
-            self.update_preview()
-            self.update_stats()
+            self.status_label.configure(text="文件加载成功", text_color="#4CAF50")
+            self._refresh_columns()
+            self._update_preview()
+            self._update_stats()
         except Exception as e:
-            messagebox.showerror("错误", f"加载文件失败: {str(e)}")
-            self.status_label.config(text="文件加载失败", foreground="#FF0000")
+            messagebox.showerror("错误", f"加载文件失败:\n{e}")
+            self.status_label.configure(text="文件加载失败", text_color="#F44336")
 
-    def refresh_columns(self):
-        """刷新列名列表"""
+    def _refresh_columns(self):
         if self.df is not None:
-            columns = list(self.df.columns)
-            self.column_combobox['values'] = columns
-            if "部门" in columns:
-                self.column_var.set("部门")
-            else:
-                self.column_var.set(columns[0] if columns else "")
+            cols = list(self.df.columns)
+            self.column_combo.configure(values=cols)
+            if "部门" in cols:
+                self.column_combo.set("部门")
+            elif cols:
+                self.column_combo.set(cols[0])
 
-    def update_preview(self):
-        """更新预览数据"""
+    def _update_preview(self):
         if self.df is None:
             return
-
-        # 清空树形视图
-        self.tree.delete(*self.tree.get_children())
-
-        # 设置列
+        for item in self.tree.get_children():
+            self.tree.delete(item)
         columns = list(self.df.columns)
-        self.tree["columns"] = columns
-
+        self.tree.configure(columns=columns, show="headings")
         for col in columns:
             self.tree.heading(col, text=str(col))
-            self.tree.column(col, width=100, anchor=tk.W)
+            self.tree.column(col, width=100, anchor="w")
+        for _, row in self.df.head(20).iterrows():
+            self.tree.insert("", "end", values=list(row))
 
-        # 只显示前20行
-        preview_data = self.df.head(20)
-        for idx, row in preview_data.iterrows():
-            self.tree.insert("", tk.END, values=list(row))
-
-    def update_stats(self):
-        """更新统计信息"""
+    def _update_stats(self):
         if self.df is not None:
-            self.row_count_label.config(text=f"总行数: {len(self.df)}")
-            self.col_count_label.config(text=f"总列数: {len(self.df.columns)}")
-
-            group_col = self.column_var.get()
-            if group_col in self.df.columns:
-                self.departments = self.df[group_col].unique()
-                self.dept_count_label.config(text=f"分组数: {len(self.departments)}")
+            self.lbl_rows.configure(text=f"总行数: {len(self.df)}")
+            self.lbl_cols.configure(text=f"总列数: {len(self.df.columns)}")
+            col = self.column_combo.get()
+            if col and col in self.df.columns:
+                self.departments = self.df[col].dropna().unique().tolist()
+                self.lbl_depts.configure(text=f"分组数: {len(self.departments)}")
             else:
-                self.dept_count_label.config(text="分组数: 0")
+                self.lbl_depts.configure(text="分组数: 0")
         else:
-            self.row_count_label.config(text="总行数: 0")
-            self.col_count_label.config(text="总列数: 0")
-            self.dept_count_label.config(text="分组数: 0")
+            self.lbl_rows.configure(text="总行数: 0")
+            self.lbl_cols.configure(text="总列数: 0")
+            self.lbl_depts.configure(text="分组数: 0")
 
-    def change_output_dir(self):
-        """更改输出目录"""
-        dirpath = filedialog.askdirectory(title="选择输出目录")
-        if dirpath:
-            self.output_dir = dirpath
-            self.output_dir_label.config(text=f"输出目录: {dirpath}", foreground="#000000")
+    def _change_output_dir(self):
+        d = filedialog.askdirectory(title="选择输出目录", initialdir=self.output_dir)
+        if d:
+            self.output_dir = d
+            self.output_label.configure(text=d)
 
-    def process_excel(self):
-        """处理Excel文件，按列分组拆分"""
+    def _process_excel(self):
         if self.df is None:
-            messagebox.showwarning("警告", "请先选择Excel文件！")
+            messagebox.showwarning("警告", "请先选择 Excel 文件！")
             return
-
-        group_col = self.column_var.get()
+        group_col = self.column_combo.get()
         if not group_col or group_col not in self.df.columns:
             messagebox.showwarning("警告", "请选择有效的分组列！")
             return
 
         try:
-            self.progress_var.set(0)
-            self.root.update()
+            self.progress.set(0)
+            self.update_idletasks()
 
             grouped = self.df.groupby(group_col)
-            total = len(grouped)
+            total   = len(grouped)
 
-            for i, (group_name, group_df) in enumerate(grouped):
-                # 处理分组名称
+            for i, (group_name, group_df) in enumerate(grouped, 1):
+                safe_name = str(group_name).replace("/", "_").replace("\\", "_").replace(":", "_")
                 if pd.isna(group_name):
-                    group_name = "未知"
-                else:
-                    group_name = str(group_name).replace('/', '_').replace('\\', '_').replace(':', '_')
+                    safe_name = "未知"
+                out_path = os.path.join(self.output_dir, f"分表_{safe_name}.xlsx")
+                group_df.to_excel(out_path, index=False)
 
-                # 生成文件名
-                output_filename = os.path.join(self.output_dir, f"分表_{group_name}.xlsx")
-                group_df.to_excel(output_filename, index=False)
+                self.progress.set(i / total)
+                self.status_label.configure(
+                    text=f"正在处理: {safe_name} ({i}/{total})",
+                    text_color="#4CAF50",
+                )
+                self.update_idletasks()
 
-                # 更新进度
-                progress = (i + 1) / total * 100
-                self.progress_var.set(progress)
-                self.status_label.config(text=f"正在处理: {group_name} ({i+1}/{total})", foreground="#000000")
-                self.root.update()
-
-            self.progress_var.set(100)
-            self.status_label.config(text=f"拆分完成！共生成 {total} 个文件", foreground="#00AA00")
-            messagebox.showinfo("完成", f"拆分完成！\n共生成 {total} 个文件\n保存在: {self.output_dir}")
-
+            self.progress.set(1)
+            self.status_label.configure(
+                text=f"拆分完成！共生成 {total} 个文件", text_color="#4CAF50",
+            )
+            messagebox.showinfo("完成", f"拆分完成！\n共生成 {total} 个文件\n保存在:\n{self.output_dir}")
         except Exception as e:
-            messagebox.showerror("错误", f"处理失败: {str(e)}")
-            self.status_label.config(text="处理失败", foreground="#FF0000")
+            messagebox.showerror("错误", f"处理失败:\n{e}")
+            self.status_label.configure(text="处理失败", text_color="#F44336")
 
-    def clear_data(self):
-        """清空数据"""
+    def _clear_data(self):
         self.df = None
         self.source_file = None
         self.departments = []
-        self.file_label.config(text="未选择文件", foreground="#666666")
-        self.column_combobox['values'] = []
-        self.progress_var.set(0)
-        self.status_label.config(text="准备就绪", foreground="#666666")
-        self.tree.delete(*self.tree.get_children())
-        self.update_stats()
+        self.file_label.configure(text="未选择文件", text_color="gray60")
+        self.column_combo.configure(values=[])
+        self.progress.set(0)
+        self.status_label.configure(text="准备就绪", text_color="gray60")
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self._update_stats()
 
 
-def main():
-    """主函数 - 独立运行时使用"""
-    root = tk.Tk()
-    app = ExcelProcessorApp(root)
-    root.mainloop()
-
+# ==================== 入口 ====================
 
 if __name__ == "__main__":
-    main()
+    ExcelProcessorApp().mainloop()

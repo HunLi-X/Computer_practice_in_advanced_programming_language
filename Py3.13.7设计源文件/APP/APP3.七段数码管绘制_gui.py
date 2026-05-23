@@ -1,225 +1,262 @@
 # ==========================================
-# App3. 七段数码管绘制 - GUI版本
+# App3. 七段数码管绘制 - GUI版本 (CustomTkinter 美化)
 # ==========================================
 
+import sys
+import os
 import tkinter as tk
-from tkinter import ttk
+# ── 依赖检查 ──
+try:
+    import customtkinter as ctk
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter", "-q"])
+    import customtkinter as ctk
+
 from tkinter import colorchooser
-import time
 
-def main():
-    """主函数 - 独立运行时使用"""
-    root = tk.Tk()
-    root.title("七段数码管绘制 - GUI")
-    root.geometry("800x600")
-    root.configure(bg="#f0f0f0")
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
-    # 七段数码管定义
-    segments = {
-        '0': [1, 1, 1, 1, 1, 1, 0],
-        '1': [0, 1, 1, 0, 0, 0, 0],
-        '2': [1, 1, 0, 1, 1, 0, 1],
-        '3': [1, 1, 1, 1, 0, 0, 1],
-        '4': [0, 1, 1, 0, 0, 1, 1],
-        '5': [1, 0, 1, 1, 0, 1, 1],
-        '6': [1, 0, 1, 1, 1, 1, 1],
-        '7': [1, 1, 1, 0, 0, 0, 0],
-        '8': [1, 1, 1, 1, 1, 1, 1],
-        '9': [1, 1, 1, 1, 0, 1, 1]
-    }
+# ── 七段数码管定义 ──
+# 七段数码管段定义：0=灭，1=亮（顺序：上、右上、右下、下、左上、左下、中）
+SEGMENTS = {
+    '0': [1, 1, 1, 1, 1, 1, 0],
+    '1': [0, 1, 1, 0, 0, 0, 0],
+    '2': [1, 1, 0, 1, 1, 0, 1],
+    '3': [1, 1, 1, 1, 0, 0, 1],
+    '4': [0, 1, 1, 0, 0, 1, 1],
+    '5': [1, 0, 1, 1, 0, 1, 1],
+    '6': [1, 0, 1, 1, 1, 1, 1],
+    '7': [1, 1, 1, 0, 0, 0, 0],
+    '8': [1, 1, 1, 1, 1, 1, 1],
+    '9': [1, 1, 1, 1, 0, 1, 1],
+}
 
-    # 颜色变量
-    segment_color = "#1E90FF"
 
-    # 创建主框架
-    main_frame = ttk.Frame(root, padding="20")
-    main_frame.pack(fill=tk.BOTH, expand=True)
+class SevenSegmentApp(ctk.CTk):
+    """七段数码管绘制主应用"""
 
-    # 标题
-    title_label = ttk.Label(
-        main_frame,
-        text="七段数码管绘制",
-        font=("Helvetica", 16, "bold"),
-        foreground="#1E90FF"
-    )
-    title_label.pack(pady=10)
+    def __init__(self):
+        super().__init__()
+        self._segment_color = "#1E90FF"
+        self._setup_window()
+        self._build_ui()
 
-    # 控制面板
-    control_frame = ttk.LabelFrame(main_frame, text="控制面板", padding="10")
-    control_frame.pack(fill=tk.X, pady=10)
+    # ==================== 窗口设置 ====================
 
-    # 第一行：输入和按钮
-    row1 = ttk.Frame(control_frame)
-    row1.pack(fill=tk.X, pady=5)
+    def _setup_window(self):
+        self.title("七段数码管绘制")
+        self.geometry("820x680")
+        self.minsize(700, 580)
+        self._center_window()
 
-    ttk.Label(row1, text="输入数字:", font=("Helvetica", 11)).pack(side=tk.LEFT, padx=5)
+    def _center_window(self):
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() - 820) // 2
+        y = (self.winfo_screenheight() - 680) // 2
+        self.geometry(f"+{x}+{y}")
 
-    input_entry = ttk.Entry(row1, font=("Helvetica", 12), width=20)
-    input_entry.pack(side=tk.LEFT, padx=5)
-    input_entry.insert(0, "20260107")  # 默认日期
+    # ==================== 构建 UI ====================
 
-    draw_btn = ttk.Button(row1, text="绘制", command=lambda: draw_number(), style="Accent.TButton")
-    draw_btn.pack(side=tk.LEFT, padx=5)
+    def _build_ui(self):
+        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=16, pady=(12, 8))
 
-    clear_btn = ttk.Button(row1, text="清空", command=lambda: canvas.delete("all"))
-    clear_btn.pack(side=tk.LEFT, padx=5)
+        # ── 标题 ──
+        ctk.CTkLabel(
+            scroll, text="🔢  七段数码管绘制",
+            font=ctk.CTkFont(size=24, weight="bold"),
+        ).pack(pady=(8, 4))
 
-    # 第二行：颜色选择
-    row2 = ttk.Frame(control_frame)
-    row2.pack(fill=tk.X, pady=5)
+        ctk.CTkLabel(
+            scroll, text="输入数字，实时绘制七段数码管",
+            font=ctk.CTkFont(size=12), text_color="gray60",
+        ).pack(pady=(0, 12))
 
-    def choose_color():
-        nonlocal segment_color
-        color = colorchooser.askcolor(title="选择段颜色", initialcolor=segment_color)
-        if color[1]:
-            segment_color = color[1]
-            color_btn.config(text=segment_color[:20])
+        # ── 控制卡片 ──
+        self._build_control_card(scroll)
 
-    color_btn = ttk.Button(row2, text=segment_color[:20], command=choose_color)
-    color_btn.pack(side=tk.LEFT, padx=5)
+        # ── 画布卡片 ──
+        self._build_canvas_card(scroll)
 
-    ttk.Label(row2, text="点击选择段颜色").pack(side=tk.LEFT, padx=5)
+    # ── 控制卡片 ──
+    def _build_control_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="x", pady=6, padx=2)
 
-    # 第三行：粗细控制
-    row3 = ttk.Frame(control_frame)
-    row3.pack(fill=tk.X, pady=5)
+        ctk.CTkLabel(
+            card, text="🎛  控制面板",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        ).pack(anchor="w", padx=14, pady=(10, 6))
 
-    ttk.Label(row3, text="段粗细:", font=("Helvetica", 11)).pack(side=tk.LEFT, padx=5)
+        # 第一行：输入 + 按钮
+        row1 = ctk.CTkFrame(card, fg_color="transparent")
+        row1.pack(fill="x", padx=14, pady=4)
 
-    width_var = tk.IntVar(value=8)
-    width_scale = ttk.Scale(row3, from_=3, to=20, variable=width_var, orient=tk.HORIZONTAL, length=150)
-    width_scale.pack(side=tk.LEFT, padx=5)
+        ctk.CTkLabel(row1, text="数字", width=40, anchor="w").pack(side="left")
+        self._entry = ctk.CTkEntry(
+            row1, placeholder_text="输入数字，如 20260107", height=34
+        )
+        self._entry.pack(side="left", fill="x", expand=True, padx=8)
+        self._entry.insert(0, "20260107")
+        self._entry.bind("<Return>", lambda _: self._draw())
 
-    width_label = ttk.Label(row3, text="8", font=("Helvetica", 11), width=3)
-    width_label.pack(side=tk.LEFT, padx=5)
+        ctk.CTkButton(
+            row1, text="▶ 绘制", width=90, height=34,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            command=self._draw,
+        ).pack(side="left", padx=4)
 
-    def update_width_label(*args):
-        width_label.config(text=str(width_var.get()))
+        ctk.CTkButton(
+            row1, text="✕ 清空", width=90, height=34,
+            fg_color="gray30", hover_color="gray40",
+            command=lambda: self._canvas.delete("all"),
+        ).pack(side="left", padx=4)
 
-    width_var.trace_add('write', update_width_label)
+        # 第二行：颜色 + 粗细
+        row2 = ctk.CTkFrame(card, fg_color="transparent")
+        row2.pack(fill="x", padx=14, pady=4)
 
-    # 第四行：动画开关
-    row4 = ttk.Frame(control_frame)
-    row4.pack(fill=tk.X, pady=5)
+        ctk.CTkButton(
+            row2, text="🎨 段颜色", width=100, height=30,
+            command=self._choose_color,
+        ).pack(side="left", padx=(0, 8))
 
-    animate_var = tk.BooleanVar(value=True)
-    animate_check = ttk.Checkbutton(row4, text="显示绘制动画", variable=animate_var)
-    animate_check.pack(side=tk.LEFT, padx=5)
+        self._color_btn = ctk.CTkButton(
+            row2, text=self._segment_color,
+            width=80, height=30, fg_color=self._segment_color,
+            text_color="white", command=self._choose_color,
+        )
+        self._color_btn.pack(side="left")
 
-    speed_label = ttk.Label(row4, text="动画速度:", font=("Helvetica", 11))
-    speed_label.pack(side=tk.LEFT, padx=5)
+        ctk.CTkLabel(row2, text="  粗细", width=50, anchor="w").pack(side="left", padx=(16, 4))
+        self._width_var = ctk.IntVar(value=8)
+        width_slider = ctk.CTkSlider(
+            row2, from_=3, to=20, variable=self._width_var, width=120
+        )
+        width_slider.pack(side="left", padx=4)
+        self._width_label = ctk.CTkLabel(row2, text="8", width=30)
+        self._width_label.pack(side="left")
+        self._width_var.trace_add("write", self._on_width_change)
 
-    speed_var = tk.IntVar(value=100)
-    speed_scale = ttk.Scale(row4, from_=10, to=500, variable=speed_var, orient=tk.HORIZONTAL, length=100)
-    speed_scale.pack(side=tk.LEFT, padx=5)
+        # 第三行：动画开关 + 速度
+        row3 = ctk.CTkFrame(card, fg_color="transparent")
+        row3.pack(fill="x", padx=14, pady=(4, 10))
 
-    speed_value_label = ttk.Label(row3, text="100ms", font=("Helvetica", 9))
-    speed_value_label.pack(side=tk.LEFT, padx=5)
+        self._animate_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(
+            row3, text="🎬 绘制动画", variable=self._animate_var,
+        ).pack(side="left", padx=(0, 12))
 
-    def update_speed_label(*args):
-        speed_value_label.config(text=f"{speed_var.get()}ms")
+        ctk.CTkLabel(row3, text="速度", width=40, anchor="w").pack(side="left")
+        self._speed_var = ctk.IntVar(value=80)
+        speed_slider = ctk.CTkSlider(
+            row3, from_=10, to=400, variable=self._speed_var, width=100
+        )
+        speed_slider.pack(side="left", padx=4)
+        self._speed_label = ctk.CTkLabel(row3, text="80ms", width=50)
+        self._speed_label.pack(side="left")
+        self._speed_var.trace_add("write", self._on_speed_change)
 
-    speed_var.trace_add('write', update_speed_label)
+    # ── 画布卡片 ──
+    def _build_canvas_card(self, parent):
+        card = ctk.CTkFrame(parent, corner_radius=14)
+        card.pack(fill="both", expand=True, pady=6, padx=2)
 
-    # 画布
-    canvas_frame = ttk.LabelFrame(main_frame, text="显示区域", padding="10")
-    canvas_frame.pack(fill=tk.BOTH, expand=True, pady=20)
+        ctk.CTkLabel(
+            card, text="🖼  显示区域",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        ).pack(anchor="w", padx=14, pady=(10, 6))
 
-    canvas = tk.Canvas(canvas_frame, bg="white", bd=2, relief=tk.SUNKEN)
-    canvas.pack(fill=tk.BOTH, expand=True)
+        # customtkinter 没有 CTkCanvas，用 tk.Canvas + CTkFrame 包裹
+        canvas_frame = ctk.CTkFrame(card, corner_radius=8, fg_color="gray10")
+        canvas_frame.pack(fill="both", expand=True, padx=14, pady=(0, 10))
+        self._canvas = tk.Canvas(canvas_frame, bg="#1a1a1a", highlightthickness=0)
+        self._canvas.pack(fill="both", expand=True, padx=4, pady=4)
 
-    # 绘制函数
-    def draw_number():
-        number = input_entry.get()
+    # ==================== 回调 ====================
+
+    def _on_width_change(self, *args):
+        self._width_label.configure(text=str(self._width_var.get()))
+
+    def _on_speed_change(self, *args):
+        self._speed_label.configure(text=f"{self._speed_var.get()}ms")
+
+    def _choose_color(self):
+        color = colorchooser.askcolor(title="选择段颜色", initialcolor=self._segment_color)
+        if color and color[1]:
+            self._segment_color = color[1]
+            self._color_btn.configure(text=color[1], fg_color=color[1])
+
+    # ==================== 绘制逻辑 ====================
+
+    def _draw(self):
+        number = self._entry.get().strip()
         if not number.isdigit():
-            result_label.config(text="请输入有效的数字！", foreground="#FF0000")
             return
+        self._canvas.delete("all")
+        w = self._canvas.winfo_width() or 600
+        h = self._canvas.winfo_height() or 300
+        digit_w = w // max(len(number), 1)
+        seg_len = min(digit_w // 2, h // 3)
+        seg_w = self._width_var.get()
 
-        result_label.config(text=f"正在绘制: {number}", foreground="#000000")
-
-        # 清空画布
-        canvas.delete("all")
-
-        # 获取画布尺寸
-        canvas_width = canvas.winfo_width()
-        canvas_height = canvas.winfo_height()
-        if canvas_width == 1:
-            canvas_width = canvas_frame.winfo_width()
-        if canvas_height == 1:
-            canvas_height = canvas_frame.winfo_height()
-
-        # 计算尺寸
-        digit_width = canvas_width // len(number)
-        digit_height = canvas_height
-        segment_length = min(digit_width // 2, digit_height // 3)
-        segment_w = width_var.get()
-        vertical_height = segment_length * 2
-
-        # 绘制每个数字
-        if animate_var.get():
-            # 动画模式：逐段绘制
-            segment_count = 0
-            total_segments = sum(sum(segments.get(digit, [0]*7)) for digit in number)
-
-            for i, digit in enumerate(number):
-                digit_x = i * digit_width + digit_width // 2
-                digit_y = digit_height // 2
-
-                for segment, state in enumerate(segments.get(digit, [0]*7)):
-                    if state == 1:
-                        draw_segment(digit_x, digit_y, segment, segment_length, segment_w, vertical_height)
-                        segment_count += 1
-                        root.update()
-                        time.sleep(speed_var.get() / 1000.0)
+        if self._animate_var.get():
+            self._draw_animated(number, digit_w, seg_len, seg_w)
         else:
-            # 非动画模式：一次性绘制
-            for i, digit in enumerate(number):
-                digit_x = i * digit_width + digit_width // 2
-                digit_y = digit_height // 2
+            for i, ch in enumerate(number):
+                self._draw_digit(i, ch, digit_w, seg_len, seg_w)
 
-                # 绘制七段
-                for segment, state in enumerate(segments.get(digit, [0]*7)):
-                    if state == 1:
-                        draw_segment(digit_x, digit_y, segment, segment_length, segment_w, vertical_height)
+    def _draw_digit(self, index, digit, digit_w, seg_len, seg_w):
+        x = index * digit_w + digit_w // 2
+        y = self._canvas.winfo_height() // 2
+        segs = SEGMENTS.get(digit, [0]*7)
+        for i, state in enumerate(segs):
+            if state:
+                self._draw_segment(x, y, i, seg_len, seg_w)
 
-    # 绘制单个段
-    def draw_segment(x, y, segment, segment_length, segment_width, vertical_height):
-        half_length = segment_length // 2
-        half_vertical = vertical_height // 2
-        gap = segment_width
+    def _draw_animated(self, number, digit_w, seg_len, seg_w):
+        def step(idx=0, seg_idx=0):
+            if idx >= len(number):
+                return
+            digit = number[idx]
+            segs = SEGMENTS.get(digit, [0]*7)
+            if seg_idx < 7:
+                if segs[seg_idx]:
+                    x = idx * digit_w + digit_w // 2
+                    y = self._canvas.winfo_height() // 2
+                    self._draw_segment(x, y, seg_idx, seg_len, seg_w)
+                self.after(self._speed_var.get(), lambda: step(idx, seg_idx + 1))
+            else:
+                self.after(10, lambda: step(idx + 1, 0))
+        step()
 
-        segment_positions = {
-            0: ((x - half_length, y - half_vertical - gap), (x + half_length, y - half_vertical - gap)),
-            1: ((x + half_length, y - half_vertical), (x + half_length, y)),
-            2: ((x + half_length, y), (x + half_length, y + half_vertical)),
-            3: ((x - half_length, y + half_vertical + gap), (x + half_length, y + half_vertical + gap)),
-            4: ((x - half_length, y), (x - half_length, y + half_vertical)),
-            5: ((x - half_length, y - half_vertical), (x - half_length, y)),
-            6: ((x - half_length, y), (x + half_length, y))
+    def _draw_segment(self, cx, cy, seg, seg_len, seg_w):
+        """在画布上绘制一段"""
+        h = seg_len
+        w = seg_w
+        gap = seg_w + 2
+
+        positions = {
+            0: (cx - h//2, cy - h - gap*2, cx + h//2, cy - h - gap*2),
+            1: (cx + h//2 + gap, cy - h - gap, cx + h//2 + gap, cy - gap//2),
+            2: (cx + h//2 + gap, cy + gap//2, cx + h//2 + gap, cy + h + gap),
+            3: (cx - h//2, cy + h + gap*2, cx + h//2, cy + h + gap*2),
+            4: (cx - h//2 - gap, cy + gap//2, cx - h//2 - gap, cy + h + gap),
+            5: (cx - h//2 - gap, cy - h - gap, cx - h//2 - gap, cy - gap//2),
+            6: (cx - h//2, cy - gap//2, cx + h//2, cy - gap//2),
         }
 
-        if segment in segment_positions:
-            (x1, y1), (x2, y2) = segment_positions[segment]
-            canvas.create_line(x1, y1, x2, y2, width=segment_width, fill=segment_color, capstyle=tk.ROUND)
+        if seg in positions:
+            x1, y1, x2, y2 = positions[seg]
+            self._canvas.create_line(
+                x1, y1, x2, y2,
+                width=seg_w, fill=self._segment_color, capstyle="round"
+            )
 
-    # 配置样式
-    style = ttk.Style()
-    style.configure("Accent.TButton", font=("Helvetica", 11, "bold"), padding=(15, 8))
 
-    # 结果提示
-    result_label = ttk.Label(main_frame, text="", font=("Helvetica", 11))
-    result_label.pack(pady=5)
-
-    # 窗口大小改变时自动重绘（仅在非动画模式下）
-    def on_configure(event):
-        if event.widget == root and not animate_var.get():
-            if input_entry.get().isdigit():
-                root.after(100, draw_number)  # 延迟执行避免频繁触发
-
-    root.bind('<Configure>', on_configure)
-
-    root.mainloop()
-
+# ==================== 入口 ====================
 
 if __name__ == "__main__":
-    main()
+    SevenSegmentApp().mainloop()
